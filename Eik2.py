@@ -13,19 +13,17 @@ class eikon_pricing:
         self.app_key = app_key
 
     def create_rics(self):
-        self.rics = [f"{ccy}=X" for ccy in self.ccys]
+        self.rics = [f"{ccy[:3]}{ccy[3:]}=R" for ccy in self.ccys]
 
-    def processMessage(self, msg):
+    def on_update(self, upd):
         try:
-            for ric, data in msg.items():
-                if ric.startswith('Error'):
-                    print(f"Error: {data}")
-                else:
-                    ccy = ric.split('=')[0]
-                    self.pricing_obj.bid_offer[ccy][0] = data['BID']
-                    self.pricing_obj.bid_offer[ccy][1] = data['ASK']
+            ric = upd['ric']
+            ccy = ric[:6]
+            self.pricing_obj.bid_offer[ccy][0] = upd['BID']
+            self.pricing_obj.bid_offer[ccy][1] = upd['ASK']
+            print(f"{ccy}: Bid - {self.pricing_obj.bid_offer[ccy][0]}, Offer - {self.pricing_obj.bid_offer[ccy][1]}")
         except Exception as e:
-            print(f"Error processing message: {e}")
+            print(f"Error processing update: {e}")
 
     def run(self):
         ek.set_app_key(self.app_key)
@@ -33,20 +31,13 @@ class eikon_pricing:
         self.create_rics()
         print("Created list of RICs")
 
-        fields = ['BID', 'ASK']
-
-        while True:
-            try:
-                data = ek.get_data(self.rics, fields)
-                self.processMessage(data)
-
-                for ccy in self.ccys:
-                    bid, offer = self.pricing_obj.bid_offer[ccy]
-                    print(f"{ccy}: Bid - {bid}, Offer - {offer}")
-
-                time.sleep(1)  # Wait for 1 second before the next update
-            except ek.EikonError as e:
-                print(f"Eikon Error: {e}")
+        try:
+            ek.streaming.StreamingPrices(self.on_update, self.rics, ['BID', 'ASK'])
+            time.sleep(1)  # Delay to ensure connection before checking for updates
+            while True:
+                time.sleep(1)  # Keep the script running to receive updates
+        except ek.EikonError as e:
+            print(f"Eikon Error: {e}")
 
 def main():
     pricing_obj = pricing()

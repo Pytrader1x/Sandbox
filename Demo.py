@@ -377,3 +377,135 @@ print(df)
 ## Reading Data
 
 Let's learn
+ how to read data from CSV and Excel files.
+```
+
+```python
+# Reading a CSV file
+csv_df = pd.read_csv('data.csv')
+print(csv_df.head())
+
+# Reading an Excel file
+excel_df = pd.read_excel('data.xlsx')
+print(excel_df.head())
+```
+
+### Basic Data Analysis
+
+```markdown
+## Basic Data Analysis
+
+Using pandas and numpy, we can perform basic data analysis.
+
+### Calculating Returns
+```
+
+```python
+# Calculating Returns
+df['Returns'] = df['Price'].pct_change()
+print(df)
+```
+
+```markdown
+### Descriptive Statistics
+```
+
+```python
+# Descriptive Statistics
+print(df.describe())
+```
+
+### Data Visualization
+
+```markdown
+## Data Visualization
+
+Visualizing data helps in understanding trends and patterns.
+
+### Plotting Data with Matplotlib
+```
+
+```python
+import matplotlib.pyplot as plt
+
+# Plotting Data
+df['Price'].plot(title='Stock Prices')
+plt.xlabel('Time')
+plt.ylabel('Price')
+plt.show()
+```
+
+```markdown
+### Plotting with Seaborn
+Seaborn is a powerful library for creating attractive and informative statistical graphics.
+```
+
+```python
+import seaborn as sns
+
+# Line Plot
+sns.lineplot(x='Stock', y='Price', data=df)
+plt.title('Stock Prices')
+plt.show()
+
+# Histogram
+sns.histplot(df['Price'], bins=10, kde=True)
+plt.title('Price Distribution')
+plt.show()
+```
+
+### Advanced Pandas
+
+```markdown
+## Advanced Pandas
+
+Pandas provides many advanced features for data manipulation.
+
+### Merging DataFrames
+```
+
+```python
+# Merging DataFrames
+df1 = pd.DataFrame({'Stock': ['AAPL', 'MSFT'], 'Price': [150, 250]})
+df2 = pd.DataFrame({'Stock': ['AAPL', 'MSFT'], 'Volume': [1000, 2000]})
+merged_df = pd.merge(df1, df2, on='Stock')
+print(merged_df)
+```
+
+```markdown
+### Grouping and Aggregating Data
+```
+
+```python
+# Grouping and Aggregating Data
+grouped_df = df.groupby('Stock').agg({'Price': 'mean', 'Volume': 'sum'})
+print(grouped_df)
+```
+
+```markdown
+### Handling Missing Data
+```
+
+```python
+# Handling Missing Data
+df_with_nan = df.copy()
+df_with_nan.loc[0, 'Price'] = None
+
+# Fill Missing Values
+df_filled = df_with_nan.fillna(df_with_nan.mean())
+print(df_filled)
+
+# Drop Missing Values
+df_dropped = df_with_nan.dropna()
+print(df_dropped)
+```
+
+### Conclusion
+
+```markdown
+# Conclusion
+
+In this notebook, we've covered the basics of Python, numpy, and pandas. We've also learned how to read data from CSV and Excel files, performed basic data analysis, and visualized data. With these tools, you're well on your way to analyzing capital markets data using Python.
+```
+
+This extended version of the notebook provides a comprehensive introduction to Python, numpy, and pandas, with additional examples and explanations to ensure a solid understanding.

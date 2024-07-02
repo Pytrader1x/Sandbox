@@ -218,9 +218,9 @@ for group_index, group in enumerate(st.session_state.trade_groups):
     direction_symbol = "🟢" if group['initialDirection'] == 'Long' else "🔴" if group['initialDirection'] == 'Short' else "⚪"
     pnl_color = "profit" if group['totalPnL'] >= 0 else "loss"
     if group['status'] == 'Closed':
-        label = f"{direction_symbol} Group {group_index + 1}: {group['trades'][0]['pair']} - Closed | Total PnL: <span class='{pnl_color}'>${group['totalPnL']:.2f}</span> | Avg Entry: {group['avgEntryPrice']:.5f} | Avg Close: {group['avgClosePrice']:.5f} | Total Size: {group['totalSizeEntered']:.2f}M"
+        label = f"{direction_symbol} Group {group_index + 1}: {group['trades'][0]['pair']} - Closed | Total PnL: ${group['totalPnL']:.2f} | Avg Entry: {group['avgEntryPrice']:.5f} | Avg Close: {group['avgClosePrice']:.5f} | Total Size: {group['totalSizeEntered']:.2f}M"
     else:
-        label = f"{direction_symbol} Group {group_index + 1}: {group['trades'][0]['pair']} - {abs(group['totalSize']):.2f}M {group['netDirection']} @ {group['weightedAvgPrice']:.5f} | PnL: <span class='{pnl_color}'>${group['totalPnL']:.2f}</span>"
+        label = f"{direction_symbol} Group {group_index + 1}: {group['trades'][0]['pair']} - {abs(group['totalSize']):.2f}M {group['netDirection']} @ {group['weightedAvgPrice']:.5f} | PnL: ${group['totalPnL']:.2f}"
 
     # Color code the group based on its direction
     group_color = '#4CAF50' if group['netDirection'] == 'Long' else '#f44336' if group['netDirection'] == 'Short' else '#808080'
@@ -235,9 +235,9 @@ for group_index, group in enumerate(st.session_state.trade_groups):
                 <p><strong>Status:</strong> {group['status']}</p>
                 <p><strong>Total Size:</strong> {abs(group['totalSize']):.2f}M {group['netDirection']}</p>
                 <p><strong>Weighted Avg Price:</strong> {group['weightedAvgPrice']:.5f}</p>
-                <p><strong>Realized PnL:</strong> <span class='{'profit' if group['realizedPnL'] >= 0 else 'loss'}'>${group['realizedPnL']:.2f}</span></p>
-                {f"<p><strong>Unrealized PnL:</strong> <span class='{'profit' if group['unrealizedPnL'] >= 0 else 'loss'}'>${group['unrealizedPnL']:.2f}</span></p>" if group['status'] == 'Open' else ''}
-                <p><strong>Total PnL:</strong> <span class='{'profit' if group['totalPnL'] >= 0 else 'loss'}'>${group['totalPnL']:.2f}</span></p>
+                <p><strong>Realized PnL:</strong> <span style='color: {"#4CAF50" if group["realizedPnL"] >= 0 else "#f44336"};'>${group['realizedPnL']:.2f}</span></p>
+                {"<p><strong>Unrealized PnL:</strong> <span style='color: " + ("#4CAF50" if group["unrealizedPnL"] >= 0 else "#f44336") + f";'>${group['unrealizedPnL']:.2f}</span></p>" if group['status'] == 'Open' else ''}
+                <p><strong>Total PnL:</strong> <span style='color: {"#4CAF50" if group["totalPnL"] >= 0 else "#f44336"};'>${group['totalPnL']:.2f}</span></p>
             </div>
         """, unsafe_allow_html=True)
         
@@ -253,17 +253,20 @@ for group_index, group in enumerate(st.session_state.trade_groups):
                 col5.write(f"**Result:** {trade['result']}")
                 col6.write(f"**Close Price:** {trade.get('closePrice', '-')}")
                 
-                if trade['result'] == 'Closed':
-                    trade_pnl = calculate_pnl(trade['entryPrice'], trade['closePrice'], trade['type'], trade['size'])
-                elif trade['type'] != group['initialDirection']:
+                if trade['type'] != group['initialDirection']:
+                    # Realized PNL for opposite direction trades
                     trade_pnl = calculate_pnl(group['weightedAvgPrice'], trade['entryPrice'], group['initialDirection'], trade['size'])
+                    pnl_type = "Realized PNL"
                 else:
-                    trade_pnl = calculate_pnl(trade['entryPrice'], current_price, trade['
+                    # Unrealized PNL for same direction trades
+                    trade_pnl = calculate_pnl(trade
                     else:
+                    # Unrealized PNL for same direction trades
                     trade_pnl = calculate_pnl(trade['entryPrice'], current_price, trade['type'], trade['size'])
+                    pnl_type = "Unrealized PNL"
                 
-                pnl_color = "profit" if trade_pnl >= 0 else "loss"
-                col7.markdown(f"**PNL:** <span class='{pnl_color}'>${trade_pnl:.2f}</span>", unsafe_allow_html=True)
+                pnl_color = "#4CAF50" if trade_pnl >= 0 else "#f44336"
+                col7.markdown(f"**{pnl_type}:** <span style='color: {pnl_color};'>${trade_pnl:.2f}</span>", unsafe_allow_html=True)
                 
                 # Add modify and delete buttons for both open and closed groups
                 if st.button(f"Modify", key=f"modify_{trade['id']}"):
@@ -376,12 +379,12 @@ summary_data = []
 for group_index, group in enumerate(st.session_state.trade_groups):
     group_id = f"Group {group_index + 1}"
     for trade in group['trades']:
-        if trade['result'] == 'Closed':
-            trade_pnl = calculate_pnl(trade['entryPrice'], trade['closePrice'], trade['type'], trade['size'])
-        elif trade['type'] != group['initialDirection']:
+        if trade['type'] != group['initialDirection']:
             trade_pnl = calculate_pnl(group['weightedAvgPrice'], trade['entryPrice'], group['initialDirection'], trade['size'])
+            pnl_type = "Realized PNL"
         else:
             trade_pnl = calculate_pnl(trade['entryPrice'], current_price, trade['type'], trade['size'])
+            pnl_type = "Unrealized PNL"
         
         summary_data.append({
             'Group': group_id,
@@ -392,6 +395,7 @@ for group_index, group in enumerate(st.session_state.trade_groups):
             'Size (M)': float(trade['size']),
             'Result': trade['result'],
             'Close Price': trade.get('closePrice', '-'),
+            'PNL Type': pnl_type,
             'PNL': trade_pnl,
             'Comment': trade['comment']
         })
